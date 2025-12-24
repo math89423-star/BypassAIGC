@@ -1,6 +1,8 @@
 ﻿# AI 学术写作助手 - 打包依赖
 # 包含后端所有依赖 + PyInstaller
 
+setuptools==69.5.1
+
 # FastAPI 后端依赖
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
