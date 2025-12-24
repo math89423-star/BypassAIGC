@@ -461,7 +461,7 @@ SEGMENT_SKIP_THRESHOLD=15
 def main():
     """主入口函数"""
     port = 8000
-    host = "192.168.0.35"
+    host = "0.0.0.0"
     
     print("\n" + "="*60)
     print("🚀 AI 学术写作助手 - 启动中...")

@@ -284,4 +284,4 @@ async def check_models_health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="192.168.0.35", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
