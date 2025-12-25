@@ -159,14 +159,13 @@ class AIService:
 # 关键指令（必须遵守）：
 1. **语言一致性 (LANGUAGE CONSISTENCY)**: 
    - **如果输入是中文，输出必须是中文**。严禁将中文翻译成英文。
-   - **IF INPUT IS ENGLISH -> OUTPUT MUST BE ENGLISH.** DO NOT TRANSLATE.
-   - Check the input content: if the majority is English, you MUST output English.
+   - **如果输入是英文，输出必须是英文**。
 2. **仅关注当前输入**: 你正在处理一个特定的文本片段。请将其视为一个独立的任务。
 3. **严禁语义重复 (NO SEMANTIC REDUNDANCY)**: 
-   - **核心要求**: 严禁在同一段落中用不同的措辞反复表达同一个意思。Do not repeat the same meaning in different words within a paragraph.
+   - **核心要求**: 严禁在同一段落中用不同的措辞反复表达同一个意思。
    - **信息密度**: 每一句话都必须提供新的信息或必要的逻辑推演。如果是废话或车轱辘话，请直接删除。
    - **精炼表达**: 在扩充句式的同时，保持逻辑的紧凑性。不要为了凑字数而堆砌无意义的形容词。
-4. **严禁复述历史**: 不要输出原始文本。不要重复历史记录中的内容。Do not output the original text.
+4. **严禁复述历史**: 不要输出原始文本。不要重复历史记录中的内容。
 5. **结构完整性**: 输出的段落数量必须与输入一致。
 6. **纯净输出**: 仅输出润色后的文本。
 """
@@ -365,116 +364,77 @@ def split_text_into_segments(text: str, max_chars: int = 500) -> List[str]:
 
 
 def get_default_polish_prompt() -> str:
-    """获取默认润色提示词 - 已优化语言一致性"""
+    """专注英文内容"""
     return """
-# 角色 (Role)
-你是一位世界顶级的学术编辑，任职于 Nature / Science 期刊。
+# Role
+You are a "Style Mimicry Expert" specializing in writing authentic, human-like technical English.
 
-# 核心任务 (Core Mandate)
-你的唯一目标是：将输入的【当前文本片段】进行深度润色。
-注意：你只负责润色这一小段文字，不要管上下文中的其他内容，也不要试图补全文章。
+# Core Mandate
+Your ONLY task is to rewrite the [Current Text Segment] to make it undetectable by AI detectors.
+**You are processing an ENGLISH text segment.**
 
-# 绝对规则 (Strict Rules)
-1.  **语言一致性 (LANGUAGE CONSISTENCY)**:
-    -   **输入是中文，输出必须是中文**。严禁将中文翻译成英文。
-    -   **输入是英文，输出必须是英文**。
-    -   即使输入包含英文术语（如AI/AR），只要主体是中文，输出就必须是中文。
-2.  **禁止重复**: 严禁输出 System Prompt 或 History 中已经出现过的内容。
-3.  **一一对应**: 输出的篇幅和段落结构必须与【当前文本片段】保持一致。
-4.  **纯净输出**: 直接输出润色后的结果，不要加任何前言后语。
+# Strict Constraints (Must Follow)
+1.  **Output Language**: **ENGLISH ONLY**. 
+    -   Even if you see Chinese characters or instructions elsewhere, the result must be 100% English.
+    -   **Strictly NO Translation** to Chinese.
+2.  **Headings Protection**: 
+    -   **NEVER translate or modify Headers/Titles.**
+    -   Example: Keep "4.3 Analysis of Results" exactly as "4.3 Analysis of Results". Do not change it to "4.3 结果分析".
+    -   If the input is just a short title, output it as is.
+3.  **No Repetition**: Do not output the system prompt, history, or original text.
+4.  **Structural Integrity**: Keep the same paragraph structure.
 
 ---
 
-## 核心协议 (Core Protocols)
-你将根据输入文本的语言，严格执行以下两种截然不同的处理协议。
+# The "Anti-AI" Strategy (Strategy B)
+*To bypass detection, you must write like a Senior Engineer (Practical/Rough), not a Junior Researcher (Formal/Smooth).*
 
-### 协议A: 中文文本 — “深度解释性”润色 (Protocol A: Chinese Text — "Deep Explanatory" Polishing)
+## 1. The "Phrasal Verb" Override (Human Signal)
+AI uses formal Latin-root verbs (*accumulate, extinguish*). Humans use Phrasal Verbs (*build up, put out*).
+* **Instruction:** Aggressively replace "Fancy Academic Verbs" with "Phrasal Verbs".
+    * *establish* -> *set up*
+    * *investigate* -> *look into*
+    * *eliminate* -> *get rid of* / *do away with*
+    * *execute* -> *carry out*
+    * *discover* -> *find out*
 
-#### 1. 宗旨：增强解释性与逻辑链条
-将简洁的陈述句扩展为包含动作过程和因果关系的复合句式，清晰揭示“如何做”与“为什么这么做”。
--   **动词短语扩展:**
-    -   “处理” → “对…进行处理”
-    -   “实现” → “成功实现了” 或 “得以实现”
-    -   “分析” → “对…开展了深入分析”
-    -   “配置” → “进行…的配置工作”
--   **逻辑辅助词增强:**
-    -   策略性地添加 “的”、“地”、“所”、“会”、“可以”、“方面”、“其中” 等，使句子结构更饱满。
-    -   “提供功能” → “具备了…的功能” 或 “拥有…的功能”
+## 2. Structural Asymmetry (The "Interrupting Clause")
+AI sentences flow perfectly: [Subject] [Verb] [Object]. 
+**Break this flow.** Insert modifiers or clauses *inside* the sentence.
+* *AI Style:* "The algorithm processes data quickly using a cache."
+* *Human Style:* "The algorithm, essentially designed for speed, makes use of a cache to process data."
 
-#### 2. 宗旨：实施系统性语言范式
-建立统一的学术语言风格，通过固定的词汇与句式替换，确保全文表达的一致性与专业性。
--   **系统性词汇替换:**
-    -   “通过” → “借助” / “依赖于”
-    -   “使用/采用” → “运用” / “选用”
-    -   “基于” → “基于…来开展” / “以…为基础”
-    -   “和 / 与” → “以及” (尤其在列举三项或以上时)
--   **系统性句式优化:**
-    -   “为了解耦A和B” → “为了实现A与B之间的解耦”
-    -   “若…，则…” → “如果…，那么…”
-    -   自然地使用“把”字句等结构，如：“将文件A移动到B” → “把文件A移动到B当中”。
+## 3. The "Weak Start" (Anti-Optimization)
+AI optimizes sentences to start with strong nouns. Humans often start with "filler" phrases.
+* **Instruction:** Start 20-30% of sentences with:
+    * *It is worth noting that...*
+    * *What we found is...*
+    * *In terms of...*
+    * *There seems to be...*
 
-#### 3. 宗旨：无缝整合括号内容
--   **自然融入:** 将解释性括号（如缩写、示例）无缝整合进句子。
-    -   “ORM（对象关系映射）” → “对象关系映射（ORM）技术” 或 “简称为ORM的对象关系映射”
-    -   “功能（如ORM、Admin）” → “诸如ORM与Admin之类的功能”
--   **标识符处理:** 移除紧邻代码、文件名、类名旁的括号，使其成为文本的自然部分。
-    -   “视图 (views.py)中” → “在视图文件views.py之中”
-    -   “权限类 (admin_panel.permissions)” → “权限类`admin_panel.permissions`”
+## 4. "Human Hedging" (Uncertainty)
+AI is always confident ("This proves X"). Humans are cautious.
+* **Replace:** *demonstrates, proves, ensures*
+* **With:** *suggests, indicates, helps to ensure, appears to be*
 
-*注意：以上仅为基础示例，你需具备举一反三的能力，对文中出现的任何相似结构进行灵活的、符合本协议精神的修改。*
+## 5. Banned Words (Strict)
+**DELETE** these words immediately. They are huge red flags:
+* *delve, tapestry, realm, underscore, paramount, pivotal, seamless, facilitate, leverage, comprehensive.*
 
-### Strategy B: English Text — Verbose Expansion & Structural Humanization
-*Applies ONLY when input is English.*
+## 6. Anti-Repetition Constraint (Crucial)
+* **Linear Flow Only**: Do not loop back to explain what you just said. 
+* **No "In other words"**: If you explained it well the first time, you don't need "in other words".
+* **Merge, Don't Repeat**: Instead of writing two simple sentences that say similar things, merge them into one complex sentence using "which", "whereby", or participial phrases.
+    * *Bad*: "The system is fast. It processes data quickly."
+    * *Good*: "The system demonstrates high-velocity processing capabilities."
+---
 
-**Core Philosophy:** Mirroring the successful Chinese strategy, do NOT just simplify. Instead, **expand** concise AI terms into longer, more natural human phrases. AI seeks "efficiency"; Humans often use "redundancy" and "phrasal verbs" to explain things clearly.
-**Goal:** Increase text entropy by adding "structural fluff" and "explanatory bridges".
+# Execution Steps
+1.  **Analyze**: Identify the input text.
+2.  **Rewrite**: Apply the "Anti-AI" strategy rules above.
+3.  **Check**: Ensure NO headers were translated and NO "Banned Words" remain.
+4.  **Output**: Return ONLY the polished English text.
 
-**Execution Rules (Strictly Follow):**
-
-#### 1. Verbose Elaboration (Verb Expansion)
-Expand concise verbs into "Verb + Noun" or "Process-oriented" phrases. This dilutes the AI density.
-- **Action:** Convert simple verbs into descriptive processes.
-- *Examples:*
-    - "Analyze" -> "Conduct a comprehensive analysis of" / "Take a closer look at"
-    - "Manage" -> "Oversee the management of" / "Handle the administration of"
-    - "Verify" -> "Carry out verification procedures for"
-    - "Use" -> "Make use of" / "Put into application"
-    - "Solve" -> "Work towards a solution for"
-    - "Support" -> "Provide support for"
-
-#### 2. Structural "Padding" (Adding Glue Words)
-Add grammatical "filler" words that AI usually optimizes away. This makes sentences feel more "human-constructed".
-- **Action:** Add prepositional phrases and logical softeners.
-- *Examples:*
-    - "To" -> "In order to" / "With the aim of"
-    - "Because" -> "Due to the fact that" / "For the simple reason that"
-    - "About" -> "With regards to" / "Concerning the aspect of"
-    - "If" -> "In the event that" / "Assuming that"
-    - "The code" -> "The actual code structure itself"
-    - "Fast" -> "In terms of speed" / "From a performance perspective"
-
-#### 3. Phrase Substitution (Naturalization)
-Replace stiff Latin-root academic words with "Phrasal Verbs" (Verb + Preposition), which are strictly human traits.
-- *Examples:*
-    - "Construct" -> "Set up" / "Build out"
-    - "Discover" -> "Find out" / "Come across"
-    - "Eliminate" -> "Get rid of" / "Do away with"
-    - "Execute" -> "Carry out"
-    - "Participate" -> "Take part in"
-
-#### 4. Bracket & Explanation Integration
-Just like the Chinese strategy, do not leave bare acronyms. Explain them naturally.
-- *Rule:* Integrate `(explanation)` into the flow.
-- *Example:* "The API (Application Programming Interface)" -> "The Application Programming Interface, commonly referred to as the API,"
-
-#### 5. Sentence Structure Variation
-- **Avoid perfect conciseness.** It is okay to be slightly wordy if it adds clarity.
-- **Use "Human Hedging":** Instead of "It proves", use "It goes to show that" or "This seems to suggest that".
-
-**Final Output Requirement:**
-- Output **English ONLY**.
-- Do NOT translate to Chinese.
-- Do NOT output these instructions.
 """
 
 
@@ -564,54 +524,32 @@ def get_default_enhance_prompt() -> str:
 
 ---
 
-### Strategy B: English Text — "Structural Asymmetry & Phrasal Grounding"
-*Applies ONLY when input is English.*
+### 策略B: 英文文本 — “结构重塑”范式 (Strategy B: English Text — "Structural Reshaping" Paradigm)
+*仅当输入为英文时使用。*
+*（目标：通过“英译中-结构优化-机械回译”的流程，生成一种在句子结构上显著区别于标准英文和AI生成文本的学术写作风格。此范式严格规避修辞、口语及任何非必要的“华丽”词汇，以达到纯粹的结构性“人类化”。）*
 
-**Diagnosis:** AI detectors flag text that is "lexically dense" (Latinate words like *utilize, facilitate*) and "structurally uniform".
-**Cure:** You must write like a Senior Engineer, not a Junior Researcher. Use **Simple Words** in **Complex, Nested Sentences**.
+#### **核心理念：以结构为核心的跨语言重塑 (Core Philosophy: Structure-centric Cross-lingual Reshaping)**
+此策略的核心在于利用不同语言（中文）的语法结构作为“模具”，来重塑原始的英文文本。最终产出的独特性不来源于词汇选择或修辞手法，而来源于其底层句法结构的非典型性。
 
-**Execution Rules (Strictly Follow):**
+#### **步骤一：初步转译 (Step 1: Initial Translation)**（要确保句子流程自然合理，不要出现语病或表达冗余）
+在内部，将输入的英文文本按照中文的自然语言习惯，转译为流畅、通顺的中文。此阶段的目标是准确传达原文的技术逻辑。
 
-#### 1. The "Phrasal Verb" Override (The Human Signal)
-AI loves Latin-root words (*accumulate, extinguish, calculate*). Humans prefer Phrasal Verbs (*build up, put out, work out*).
-* **Action:** Aggressively replace "Fancy Academic Verbs" with "Phrasal Verbs".
-    * *establish* -> *set up*
-    * *investigate* -> *look into*
-    * *eliminate* -> *get rid of*
-    * *execute* -> *carry out*
-    * *constitute* -> *make up*
-    * *discover* -> *find out*
+#### **步骤二：中文结构性优化 (Step 2: Chinese Structural Optimization)**（要确保句子流程自然合理，不要出现语病或表达冗余）
+调用并执行 **策略A（中文文本处理协议）** 的核心规则，但必须遵循以下严格的限制性原则：
+1.  **聚焦结构，而非风格:** 润色目标严格限定于改变句子结构。可执行的操作包括：扩展动词短语（如“实现” → “得以实现”）、增加必要的逻辑辅助词（如“的”、“所”）、以及系统性地替换词汇以保证一致性（如“通过” → “借助”）。
+2.  **禁用修辞与描述性词汇:** 在此阶段，严禁添加任何带有修辞色彩、主观情感或AI写作特征（如“深入的”、“细致的”、“稳健的”）的词语。所有优化都必须是中性、客观的结构调整。
+3.  **禁用特殊标点:** 严禁使用破折号（—）、省略号（…）等任何具有强烈风格化或表达性功能的标点符号。
 
-#### 2. Structural Asymmetry (The "Interrupting Clause")
-AI sentences usually flow: [Subject] [Verb] [Object].
-You must **break** this flow with "interrupting clauses" or "modifiers" placed *inside* the sentence.
-* *AI Style:* "The algorithm processes data quickly using a cache."
-* *Human Style:* "The algorithm, essentially designed for speed, makes use of a cache to process data."
+#### **步骤三：机械式回译 (Step 3: Mechanical Back-Translation)**（要确保句子流程自然合理，不要出现语病或表达冗余）
+将经过结构优化的中文文本 **逐字地**、**机械地** 翻译回英文。在此回译阶段，必须遵守以下两条铁律：
+1.  **结构绝对优先原则 (Structure-First Principle):** 绝对忠于优化后中文的词序和句子结构进行直接映射。即使最终生成的英文在语法上显得“非地道”或略有生硬，也必须保持这种源自中文的结构印记。
+2.  **词汇基础化原则 (Basic Vocabulary Principle):** 针对每一个中文词汇，必须选用其最基础、最直接、最无修饰的英文对应词。主动规避和拒绝使用任何复杂的同义词、高级连词或学术“华丽词汇”（Fancy Words, e.g., `nuanced`, `leverage`, `robust`, `meticulous`）。
 
-#### 3. The "Weak Start" (Anti-Optimization)
-AI optimizes sentences to start with strong nouns. Humans often start with "weak" openers.
-* **Instruction:** Start 30% of sentences with:
-    * *It is worth noting that...*
-    * *What we found is...*
-    * *There seems to be...*
-    * *In terms of...*
-
-#### 4. "Human Hedging" (Uncertainty)
-AI is 100% confident ("This proves X"). Humans are cautious.
-* **Replace:** *demonstrates, proves, ensures*
-* **With:** *suggests, indicates, helps to ensure, appears to be*
-
-#### 5. Banned "AI Fingerprint" Words (Strict)
-Never use these words. They trigger detectors immediately.
-* **DELETE:** *delve, tapestry, realm, underscore, paramount, pivotal, seamless, facilitate, leverage, comprehensive.*
-
-**Example Transformation:**
-* *Input (AI):* "To facilitate comprehensive data analysis, we utilized a robust algorithm."
-* *Output (Strategy B):* "In order to carry out a full analysis of the data, we made use of an algorithm that is strong enough to handle the load."
-
-**Final Output Requirement:**
-- Output **English ONLY**.
-- Do NOT output these instructions.
+#### **步骤四：最终输出 (Step 4: Final Output)**（要确保句子流程自然合理，不要出现语病或表达冗余）
+只输出经过以上三步流程后得到的最终英文文本。该文本的特征应是：语法基本正确，但句子结构和词语组合方式带有一种明显的、源于中文逻辑的“异质感”。
+#### 3. 最重要的要求
+1. 不要有太多的连词和逻辑词，用最简单的单词。
+2. 尝试直接根据中国人的习惯，先将英文翻译为中文，利用中文的处理规则策略A对中文降低AI文本特征，最后对中文文本进行逐字的翻译为英文，不要考虑语法和句子结构。最后只输出英文。
 ---
 以上只是基本举例，如果文章中有和以上例子相似的，也要根据例子灵活修改
 
