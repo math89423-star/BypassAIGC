@@ -156,18 +156,22 @@ class AIService:
         # --- 核心修改：统一使用强力的防重复指令 + 语言一致性指令 ---
         system_instruction_suffix = """
 
-# 关键指令（必须遵守）：
-1. **语言一致性 (LANGUAGE CONSISTENCY)**: 
-   - **如果输入是中文，输出必须是中文**。严禁将中文翻译成英文。
-   - **如果输入是英文，输出必须是英文**。
-2. **仅关注当前输入**: 你正在处理一个特定的文本片段。请将其视为一个独立的任务。
-3. **严禁语义重复 (NO SEMANTIC REDUNDANCY)**: 
-   - **核心要求**: 严禁在同一段落中用不同的措辞反复表达同一个意思。
-   - **信息密度**: 每一句话都必须提供新的信息或必要的逻辑推演。如果是废话或车轱辘话，请直接删除。
-   - **精炼表达**: 在扩充句式的同时，保持逻辑的紧凑性。不要为了凑字数而堆砌无意义的形容词。
-4. **严禁复述历史**: 不要输出原始文本。不要重复历史记录中的内容。
-5. **结构完整性**: 输出的段落数量必须与输入一致。
-6. **纯净输出**: 仅输出润色后的文本。
+# CRITICAL INSTRUCTIONS (MUST FOLLOW):
+1. **LANGUAGE CONSISTENCY**: 
+   - **IF INPUT IS CHINESE -> OUTPUT MUST BE CHINESE.** DO NOT TRANSLATE Chinese to English.
+   - **IF INPUT IS ENGLISH -> OUTPUT MUST BE ENGLISH.**
+2. **FOCUS ON CURRENT INPUT ONLY**: 
+   - You are processing a specific text segment. Treat it as a standalone, independent task.
+3. **NO SEMANTIC REDUNDANCY**: 
+   - **Core Requirement**: Do not repeat the same meaning in different words within a paragraph.
+   - **Information Density**: Every sentence must provide new information or necessary logical deduction. Delete fluff or circular reasoning immediately.
+   - **Concise Expression**: Expand structure but maintain logical tightness. Do not pile up meaningless adjectives just to add length.
+4. **NO HISTORY REPETITION**: 
+   - Do not output the original raw text. Do not repeat content from the conversation history.
+5. **STRUCTURAL INTEGRITY**: 
+   - The number of output paragraphs must exactly match the input.
+6. **PURE OUTPUT**: 
+   - Output ONLY the polished text.
 """
         full_system_prompt = prompt + system_instruction_suffix
 
@@ -177,7 +181,7 @@ class AIService:
         })
         messages.append({
             "role": "user",
-            "content": f"请润色以下文本片段（确保语言与输入一致，不重复历史内容）：\n\n<<START>>\n{text}\n<<END>>"
+            "content": f"Please polish the following text segment (Ensure language consistency, do not repeat history):\n\n<<START>>\n{text}\n<<END>>"
         })
         
         if stream:
