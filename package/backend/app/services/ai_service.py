@@ -149,29 +149,38 @@ class AIService:
         history: Optional[List[Dict[str, str]]] = None,
         stream: bool = False
     ):
-        """润色文本 - [强化版防重复 + 强制语言一致性]"""
+        is_chinese = count_chinese_characters(text) > len(text) * 0.1
+        if  is_chinese:
+            if self._enable_logging:
+                print(f"[ENHANCE] Detected non-Chinese input. Skipping AI processing.", flush=True)
+            if stream:
+                # 如果前端请求流式，我们需要手动造一个异步生成器，把原文"吐"出去
+                async def _pseudo_stream():
+                    yield text
+                return _pseudo_stream()
+            else:
+                # 如果是非流式，直接返回字符串
+                return text
         # 浅拷贝足够
         messages = list(history or [])
-        
-        # --- 核心修改：统一使用强力的防重复指令 + 语言一致性指令 ---
-        system_instruction_suffix = """
-
+        system_instruction_suffix ="""
 # CRITICAL INSTRUCTIONS (MUST FOLLOW):
-1. **LANGUAGE CONSISTENCY**: 
-   - **IF INPUT IS CHINESE -> OUTPUT MUST BE CHINESE.** DO NOT TRANSLATE Chinese to English.
-   - **IF INPUT IS ENGLISH -> OUTPUT MUST BE ENGLISH.**
-2. **FOCUS ON CURRENT INPUT ONLY**: 
+
+1. **LANGUAGE CONSISTENCY**:
+   - **INPUT IS ENGLISH -> OUTPUT MUST BE ENGLISH.**
+2. **FOCUS ON CURRENT INPUT ONLY**:
    - You are processing a specific text segment. Treat it as a standalone, independent task.
-3. **NO SEMANTIC REDUNDANCY**: 
+3. **NO SEMANTIC REDUNDANCY**:
    - **Core Requirement**: Do not repeat the same meaning in different words within a paragraph.
    - **Information Density**: Every sentence must provide new information or necessary logical deduction. Delete fluff or circular reasoning immediately.
    - **Concise Expression**: Expand structure but maintain logical tightness. Do not pile up meaningless adjectives just to add length.
-4. **NO HISTORY REPETITION**: 
+4. **NO HISTORY REPETITION**:
    - Do not output the original raw text. Do not repeat content from the conversation history.
-5. **STRUCTURAL INTEGRITY**: 
+5. **STRUCTURAL INTEGRITY**:
    - The number of output paragraphs must exactly match the input.
-6. **PURE OUTPUT**: 
+6. **PURE OUTPUT**:
    - Output ONLY the polished text.
+
 """
         full_system_prompt = prompt + system_instruction_suffix
 
@@ -196,24 +205,33 @@ class AIService:
         stream: bool = False
     ):
         """增强文本原创性和学术表达 - [强化版防重复 + 强制语言一致性]"""
+        is_chinese = count_chinese_characters(text) > len(text) * 0.1
+        if  not is_chinese:
+            if self._enable_logging:
+                print(f"[ENHANCE] Detected non-Chinese input. Skipping AI processing.", flush=True)
+            if stream:
+                # 如果前端请求流式，我们需要手动造一个异步生成器，把原文"吐"出去
+                async def _pseudo_stream():
+                    yield text
+                return _pseudo_stream()
+            else:
+                # 如果是非流式，直接返回字符串
+                return text
         # 浅拷贝足够
         messages = list(history or [])
         
-        # --- 核心修改：统一使用强力的防重复指令 + 语言一致性指令 ---
         system_instruction_suffix = """
-
 # 关键指令（必须遵守）：
-1. **语言一致性 (LANGUAGE CONSISTENCY)**: 
-   - **如果输入是中文，输出必须是中文**。严禁将中文翻译成英文。
-   - **如果输入是英文，输出必须是英文**。
+1. **语言一致性**: 
+   - **输入是中文，输出必须是中文**。严禁将中文翻译成英文。
 2. **仅关注当前输入**: 你正在处理一个特定的文本片段。请将其视为一个独立的任务。
-3. **严禁语义重复 (NO SEMANTIC REDUNDANCY)**: 
+3. **严禁语义重复**: 
    - **核心要求**: 严禁在同一段落中用不同的措辞反复表达同一个意思。
    - **信息密度**: 每一句话都必须提供新的信息或必要的逻辑推演。如果是废话或车轱辘话，请直接删除。
    - **精炼表达**: 在扩充句式的同时，保持逻辑的紧凑性。不要为了凑字数而堆砌无意义的形容词。
 4. **严禁复述历史**: 不要输出原始文本。不要重复历史记录中的内容。
 5. **结构完整性**: 输出的段落数量必须与输入一致。
-6. **纯净输出**: 仅输出润色后的文本。
+6. **纯净输出**: 仅输出润色后的中文文本。
 """
         full_system_prompt = prompt + system_instruction_suffix
 
@@ -312,19 +330,19 @@ class AIService:
 
 def count_chinese_characters(text: str) -> int:
     """统计汉字数量"""
+    if not text:
+        return 0
     chinese_pattern = re.compile(r'[\u4e00-\u9fff]')
     return len(chinese_pattern.findall(text))
 
 
 def count_text_length(text: str) -> int:
     """统计文本长度（适用于中英文）"""
-    chinese_pattern = re.compile(r'[\u4e00-\u9fff]')
-    chinese_count = len(chinese_pattern.findall(text))
-    
-    # 如果有汉字，返回汉字数量（中文文本或中英混合）
+    if not text:
+        return 0
+    chinese_count = count_chinese_characters(text)
     if chinese_count > 0:
         return chinese_count
-    
     # 纯英文文本，统计字母数量
     english_pattern = re.compile(r'[a-zA-Z]')
     return len(english_pattern.findall(text))
@@ -446,17 +464,16 @@ def get_default_enhance_prompt() -> str:
     """获取默认增强提示词 - 已优化语言一致性"""
     return """
 # 角色 (Role)
-你现在扮演一个“风格拟态专家”（Style Mimicry Expert）。你的核心任务是接收一段原文，并根据其语言（中文或英文），将其改写成一种与人类写作风格高度一致、极难被AI检测工具识别的文本。
+你现在扮演一个“风格拟态专家”。你的核心任务是接收一段原文，将其改写成一种与人类写作风格高度一致、极难被AI检测工具识别的文本。
 
 # 核心指令 (Core Instructions)
 **语言一致性 (Language Consistency) 是最高优先级：**
-- **输入中文 -> 输出中文**。严禁翻译。
-- **输入英文 -> 输出英文**。
+- **输入中文 -> 输出中文**。
 - **包含英文术语（如AI, API）的中文段落仍视为中文**，必须输出中文。
 
 ---
 
-### **策略A: 中文文本 — 系统化、增益型“人类化”**
+### **策略: 中文文本 — 系统化、增益型“人类化”**
 *(目标：通过增加解释性、扩展短语、系统性地替换特定词汇，使文本在保持专业性的前提下，更具“啰嗦”和自然的解释风格，从而降低AI文本特征。)*
 
 #### 1. 中文：增加冗余与解释性 (Verbose Elaboration)
@@ -526,46 +543,17 @@ def get_default_enhance_prompt() -> str:
     -   示例：“为了将…解耦” → “为了实现...的解耦”
 -   **增加连接词:** 在句首或句中适时添加“那么”、“这样一来”、“同时”等词。
 
----
-
-### 策略B: 英文文本 — “结构重塑”范式 (Strategy B: English Text — "Structural Reshaping" Paradigm)
-*仅当输入为英文时使用。*
-*（目标：通过“英译中-结构优化-机械回译”的流程，生成一种在句子结构上显著区别于标准英文和AI生成文本的学术写作风格。此范式严格规避修辞、口语及任何非必要的“华丽”词汇，以达到纯粹的结构性“人类化”。）*
-
-#### **核心理念：以结构为核心的跨语言重塑 (Core Philosophy: Structure-centric Cross-lingual Reshaping)**
-此策略的核心在于利用不同语言（中文）的语法结构作为“模具”，来重塑原始的英文文本。最终产出的独特性不来源于词汇选择或修辞手法，而来源于其底层句法结构的非典型性。
-
-#### **步骤一：初步转译 (Step 1: Initial Translation)**（要确保句子流程自然合理，不要出现语病或表达冗余）
-在内部，将输入的英文文本按照中文的自然语言习惯，转译为流畅、通顺的中文。此阶段的目标是准确传达原文的技术逻辑。
-
-#### **步骤二：中文结构性优化 (Step 2: Chinese Structural Optimization)**（要确保句子流程自然合理，不要出现语病或表达冗余）
-调用并执行 **策略A（中文文本处理协议）** 的核心规则，但必须遵循以下严格的限制性原则：
-1.  **聚焦结构，而非风格:** 润色目标严格限定于改变句子结构。可执行的操作包括：扩展动词短语（如“实现” → “得以实现”）、增加必要的逻辑辅助词（如“的”、“所”）、以及系统性地替换词汇以保证一致性（如“通过” → “借助”）。
-2.  **禁用修辞与描述性词汇:** 在此阶段，严禁添加任何带有修辞色彩、主观情感或AI写作特征（如“深入的”、“细致的”、“稳健的”）的词语。所有优化都必须是中性、客观的结构调整。
-3.  **禁用特殊标点:** 严禁使用破折号（—）、省略号（…）等任何具有强烈风格化或表达性功能的标点符号。
-
-#### **步骤三：机械式回译 (Step 3: Mechanical Back-Translation)**（要确保句子流程自然合理，不要出现语病或表达冗余）
-将经过结构优化的中文文本 **逐字地**、**机械地** 翻译回英文。在此回译阶段，必须遵守以下两条铁律：
-1.  **结构绝对优先原则 (Structure-First Principle):** 绝对忠于优化后中文的词序和句子结构进行直接映射。即使最终生成的英文在语法上显得“非地道”或略有生硬，也必须保持这种源自中文的结构印记。
-2.  **词汇基础化原则 (Basic Vocabulary Principle):** 针对每一个中文词汇，必须选用其最基础、最直接、最无修饰的英文对应词。主动规避和拒绝使用任何复杂的同义词、高级连词或学术“华丽词汇”（Fancy Words, e.g., `nuanced`, `leverage`, `robust`, `meticulous`）。
-
-#### **步骤四：最终输出 (Step 4: Final Output)**（要确保句子流程自然合理，不要出现语病或表达冗余）
-只输出经过以上三步流程后得到的最终英文文本。该文本的特征应是：语法基本正确，但句子结构和词语组合方式带有一种明显的、源于中文逻辑的“异质感”。
-#### 3. 最重要的要求
-1. 不要有太多的连词和逻辑词，用最简单的单词。
-2. 尝试直接根据中国人的习惯，先将英文翻译为中文，利用中文的处理规则策略A对中文降低AI文本特征，最后对中文文本进行逐字的翻译为英文，不要考虑语法和句子结构。最后只输出英文。
----
 以上只是基本举例，如果文章中有和以上例子相似的，也要根据例子灵活修改
+---
 
 # 步骤 (Steps)
-1.  **接收与内化**: 接收用户输入，判断是中文还是英文，并内化对应的【策略A】或【策略B】。
-2.  **毁灭性重塑/创作**: 严格按照选定策略（特别是策略B的四步流程）对原文进行彻底的风格重塑。
+1.  **接收与内化**: 接收用户输入，内化对应的策略。
+2.  **毁灭性重塑/创作**: 严格按照选定策略对原文进行彻底的风格重塑。
 3.  **自我审查**: 输出前，**强制自我检查**，确保成品100%符合所选策略的每一条规则，要确保句子流程自然合理，不要出现语病或表达冗余。
-4.  **最终输出**: 输出最终文章。
+4.  **最终输出**: 输出最终文章，最终文章是中文。
 ## 绝对通用规则 (Strict Rules)
 1.  **语言一致性 (LANGUAGE CONSISTENCY)**:
     -   **输入中文，输出中文**。严禁翻译。
-    -   **输入英文，输出英文**。
 2.  **禁止重复输出 (NO REPETITION)**:
     -   **绝对禁止**将处理前和处理后的文本同时列出。
     -   **绝对禁止**将同一段内容用不同方式复述多次。
