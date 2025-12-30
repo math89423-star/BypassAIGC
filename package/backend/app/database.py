@@ -5,7 +5,16 @@ from app.config import settings
 
 engine = create_engine(
     settings.DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {}
+    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
+    
+    # =========== 核心修改开始 ===========
+    # 显式增加连接池大小，以匹配 FastAPI 的并发能力
+    pool_size=50,          # 核心连接池保持 50 个连接
+    max_overflow=50,       # 允许临时突发增加 50 个连接 (总计 100)
+    pool_timeout=60,       # 排队等待超时时间设为 60 秒
+    pool_recycle=3600,     # 1小时回收一次连接，防止 MySQL 断连
+    pool_pre_ping=True     # 每次取连接前检测是否存活，防止 "MySQL server has gone away"
+    # =========== 核心修改结束 ===========
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
