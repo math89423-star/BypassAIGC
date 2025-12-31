@@ -1,9 +1,4 @@
-﻿# AI 学术写作助手 - 打包依赖
-# 包含后端所有依赖 + PyInstaller
-
-setuptools==69.5.1
-
-# FastAPI 后端依赖
+setuptools==68.2.2
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 sqlalchemy==2.0.25
@@ -20,6 +15,4 @@ alembic==1.13.1
 redis==5.0.1
 aioredis==2.0.1
 sse-starlette==3.0.3
-
-# 打包工具
 pyinstaller==6.3.0

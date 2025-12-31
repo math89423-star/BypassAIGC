@@ -37,6 +37,14 @@ hidden_imports = [
     'sse_starlette',
     'redis',
     'dotenv',
+    'jaraco', 
+    'jaraco.text', 
+    'jaraco.functools',
+    'jaraco.context',
+    'platformdirs',
+    'pkg_resources.extern',
+    'platformdirs.windows',
+    'platformdirs.api',
 ]
 
 # 收集 uvicorn 和其他依赖的子模块
